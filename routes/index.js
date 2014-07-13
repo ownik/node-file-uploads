@@ -19,6 +19,7 @@ router.post('/', function(req, res, next) {
     form.on('error', function(err){
         if(fs.existsSync(uploadFile.path)) {
             fs.unlinkSync(uploadFile.path);
+            console.log('error');
         }
     });
 

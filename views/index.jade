@@ -2,13 +2,13 @@ extends layout
 
 block content
   h1 File Uploads
-  div
-    input(type='file',style='display: none', name='uploadFiles',id='uploadFiles',multiple)
+  hr
+  input(type='file',style='display: none', name='uploadFiles',id='uploadFiles',multiple)
+  div(style='margin-bottom:15px')
     button.btn.btn-primary(id='addFilesButton') Add files
-    button.btn.btn-primary(id='uploadAllFilesButton') Upload All
-    hr
-    div.progress
-      div#progress.progress-bar(role='progressbar', style='width: 0%')
+    button.btn.btn-primary(id='uploadAllFilesButton', style='margin-left:5px') Upload All
+  div.progress
+    div#progress.progress-bar(role='progressbar', style='width: 0%')
   table#files.table
 
 

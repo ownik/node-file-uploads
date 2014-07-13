@@ -23,7 +23,13 @@ function JSUploader() {
             processData: false,
             type: 'POST',
             success: function(response) {
-                //alert(response.status);
+                var message = file.element.find('td.message');
+                if(response.status == 'ok') {
+                    message.html(response.text);
+                   }
+                   else {
+                    message.html(response.errors);
+                   }
             },
             xhr: function() {
                 var xhr = $.ajaxSettings.xhr();
@@ -54,7 +60,7 @@ function JSUploader() {
     this.updateFileProgress = function(index, done, total, view) {
         var percent = (Math.floor(done/total*1000)/10);
 
-        var progress = view.children().eq(2).children().eq(0).children().eq(0);
+        var progress = view.find('div.progress-bar');
 
         progress.width(percent + '%');
         progress.html(percent + '%');
@@ -82,9 +88,26 @@ function JSUploader() {
         var row = $('<tr>');
         row.hide();
 
+        var isValidType = (file.type == 'image/png'
+            || file.type == 'image/jpeg'
+            || file.type == 'image/jpg');
+
         //create preview
         var preview = $('<td>');
-        preview.width('50px');
+        preview.width('100px');
+        if(isValidType)
+        {
+            var img = $('<img>');
+            img.attr('class', 'img-responsive');
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                img.attr('src', e.target.result);
+            }
+            reader.readAsDataURL(file);
+
+            preview.append(img);
+        }
 
         //create file info column
         var fileInfo = $('<td>');
@@ -97,26 +120,48 @@ function JSUploader() {
         fileType.html(file.type);
 
         var fileSize = $('<div>');
-        fileSize.html(file.size / 1024 / 1024 + ' MB');
+        var size = file.size;
+
+        if((file.size / 1024 / 1024) > 1.0) {
+            fileSize.html(Math.floor(file.size / 1024 / 1024) + ' MB');
+        }
+        else if((file.size / 1024) > 1.0) {
+            fileSize.html(Math.floor(file.size / 1024) + ' KB');
+        }
+        else {
+            fileSize.html(file.size + ' bytes');
+        }
+
 
         fileInfo.append(fileName);
         fileInfo.append(fileType);
         fileInfo.append(fileSize);
 
+        //create message column
+        var messageColumn = $('<td>');
+        messageColumn.attr('class', 'message');
+        messageColumn.width('200px');
+        if(!isValidType)
+        {
+            messageColumn.html('Unsupported mimetype ' + file.type);
+        }
+
         //create progress
         var progressColumn = $('<td>');
         progressColumn.attr('style', 'vertical-align: middle;');
+        if(isValidType) {
+            var progress = $('<div>');
 
-        var progress = $('<div>');
-        progress.attr('class', 'progress');
+            progress.attr('class', 'progress');
 
-        var progressBar = $('<div>');
-        progressBar.attr('class', 'progress-bar');
-        progressBar.attr('role', 'progressbar');
-        progressBar.html('0%');
+            var progressBar = $('<div>');
+            progressBar.attr('class', 'progress-bar');
+            progressBar.attr('role', 'progressbar');
+            progressBar.html('0%');
 
-        progress.append(progressBar);
-        progressColumn.append(progress);
+            progress.append(progressBar);
+            progressColumn.append(progress);
+        }
 
         //create buttons
         var button1 = $('<td>');
@@ -128,7 +173,9 @@ function JSUploader() {
         uploadButton.click(function(){
             baseClass.uploadFile(row.index());
         });
-        button1.append(uploadButton);
+        if(isValidType) {
+            button1.append(uploadButton);
+        }
 
         var button2 = $('<td>');
         button2.width('50px');
@@ -146,6 +193,7 @@ function JSUploader() {
 
         row.append(preview);
         row.append(fileInfo);
+        row.append(messageColumn);
         row.append(progressColumn);
         row.append(button1);
         row.append(button2);
