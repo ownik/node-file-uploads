@@ -1,5 +1,6 @@
 var express = require('express'),
     router = express.Router(),
+    fs = require("fs"),
     multiparty = require('multiparty');
 
 /* GET home page. */
@@ -12,11 +13,13 @@ router.post('/', function(req, res, next) {
     var form = new multiparty.Form();
     var uploadFile = {uploadPath: '', type: '', size: 0};
     var maxSize = 2 * 1024 * 1024; //2MB
-    var supportMimeTypes = ['image/jpg', 'image/png'];
+    var supportMimeTypes = ['image/jpg', 'image/jpeg', 'image/png'];
     var errors = [];
 
     form.on('error', function(err){
-        fs.unlinkSync(uploadImage.path);
+        if(fs.existsSync(uploadFile.path)) {
+            fs.unlinkSync(uploadFile.path);
+        }
     });
 
     form.on('close', function() {
@@ -24,7 +27,9 @@ router.post('/', function(req, res, next) {
             res.send({status: 'ok', text: 'Success'});
         }
         else {
-            fs.unlinkSync(uploadImage.path);
+            if(fs.existsSync(uploadFile.path)) {
+                fs.unlinkSync(uploadFile.path);
+            }
             res.send({status: 'bad', errors: errors});
         }
     });
@@ -44,8 +49,11 @@ router.post('/', function(req, res, next) {
         }
 
         if(errors.length == 0) {
-            var out = fs.createWriteStream(uploadImage.path);
+            var out = fs.createWriteStream(uploadFile.path);
             part.pipe(out);
+        }
+        else {
+            part.resume();
         }
     });
 
