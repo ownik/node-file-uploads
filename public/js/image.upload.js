@@ -4,7 +4,7 @@ function JSUploader() {
 
     this.addFiles = function(files) {
         $.each(files, function(i, file) {
-            var temp = {file: file, progressTotal: 0, progressDone: 0, element: baseClass.attachFileToView(file)};
+            var temp = {file: file, progressTotal: 0, progressDone: 0, element: baseClass.attachFileToView(file), done: false};
             baseClass.allFiles.unshift(temp);
         });
     };
@@ -26,10 +26,11 @@ function JSUploader() {
                 var message = file.element.find('td.message');
                 if(response.status == 'ok') {
                     message.html(response.text);
-                   }
-                   else {
+                    file.element.find('button.uploadButton').remove();
+                }
+                else {
                     message.html(response.errors);
-                   }
+                }
             },
             xhr: function() {
                 var xhr = $.ajaxSettings.xhr();
@@ -168,7 +169,7 @@ function JSUploader() {
         button1.attr('style', 'vertical-align: middle; width:50px');
 
         var uploadButton = $('<button>');
-        uploadButton.attr('class', 'btn btn-primary');
+        uploadButton.attr('class', 'btn btn-primary uploadButton');
         uploadButton.html('Upload');
         uploadButton.click(function(){
             baseClass.uploadFile(row.index());

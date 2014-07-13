@@ -2,6 +2,7 @@
   "name": "node-file-uploads",
   "version": "0.0.1",
   "private": true,
+  "main": "./bin/www",
   "scripts": {
     "start": "node ./bin/www"
   },
