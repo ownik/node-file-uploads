@@ -1,0 +1,9 @@
+extends layout
+
+block content
+  h1 Загрузка файлов
+  form(method='post', action='/uploadpictures',id='uploadImageForm',enctype='multipart/form-data')
+    input(type='file',style='display: none', name='uploadImages',id='uploadImages',multiple)
+    input.btn.btn-primary(type='button',id='uploadImagesButton' value='Загрузить')
+block otherScripts
+  script(src='/js/image.upload.js')

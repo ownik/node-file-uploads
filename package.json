@@ -1,0 +1,18 @@
+{
+  "name": "node-file-uploads",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "express": "latest",
+    "serve-favicon": "latest",
+    "morgan": "latest",
+    "cookie-parser": "latest",
+    "body-parser": "latest",
+    "debug": "latest",
+    "jade": "latest",
+    "multiparty": "latest"
+  }
+}
