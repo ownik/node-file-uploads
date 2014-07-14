@@ -4,7 +4,13 @@ function JSUploader() {
 
     this.addFiles = function(files) {
         $.each(files, function(i, file) {
-            var temp = {file: file, progressTotal: 0, progressDone: 0, element: baseClass.attachFileToView(file), done: false};
+            var temp = {file: file, progressTotal: 0, progressDone: 0, element: null, valid: false};
+
+            temp.valid = (file.type == 'image/png'
+                || file.type == 'image/jpeg'
+                || file.type == 'image/jpg') && file.size / 1024 / 1024 < 2;
+
+            temp.element = baseClass.attachFileToView(temp);
             baseClass.allFiles.unshift(temp);
         });
     };
@@ -12,44 +18,46 @@ function JSUploader() {
     this.uploadFile =  function(index) {
         var file = baseClass.allFiles[index];
 
-        var data = new FormData();
-        data.append('uploadFile', file.file);
+        if(file.valid) {
+            var data = new FormData();
+            data.append('uploadFile', file.file);
 
-        $.ajax({
-            url: '/',
-            data: data,
-            cache: false,
-            contentType: false,
-            processData: false,
-            type: 'POST',
-            success: function(response) {
-                var message = file.element.find('td.message');
-                if(response.status == 'ok') {
-                    message.html(response.text);
-                    file.element.find('button.uploadButton').remove();
+            $.ajax({
+                url: '/',
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                type: 'POST',
+                success: function (response) {
+                    var message = file.element.find('td.message');
+                    if (response.status == 'ok') {
+                        message.html(response.text);
+                        file.element.find('button.uploadButton').remove();
+                    }
+                    else {
+                        message.html(response.errors);
+                    }
+                },
+                xhr: function () {
+                    var xhr = $.ajaxSettings.xhr();
+
+                    if (xhr.upload) {
+                        console.log('xhr upload');
+
+                        xhr.upload.onprogress = function (e) {
+                            file.progressDone = e.position || e.loaded;
+                            file.progressTotal = e.totalSize || e.total;
+                            baseClass.updateFileProgress(index, file.progressDone, file.progressTotal, file.element);
+                            baseClass.totalProgressUpdated();
+                            console.log('xhr.upload progress: ' + file.progressDone + ' / ' + file.progressTotal + ' = ' + (Math.floor(file.progressDone / file.progressTotal * 1000) / 10) + '%');
+                        };
+                    }
+
+                    return xhr;
                 }
-                else {
-                    message.html(response.errors);
-                }
-            },
-            xhr: function() {
-                var xhr = $.ajaxSettings.xhr();
-
-                if ( xhr.upload ) {
-                    console.log('xhr upload');
-
-                    xhr.upload.onprogress = function(e) {
-                        file.progressDone = e.position || e.loaded;
-                        file.progressTotal = e.totalSize || e.total;
-                        baseClass.updateFileProgress(index, file.progressDone, file.progressTotal, file.element);
-                        baseClass.totalProgressUpdated();
-                        console.log('xhr.upload progress: ' + file.progressDone + ' / ' + file.progressTotal + ' = ' + (Math.floor(file.progressDone/file.progressTotal*1000)/10) + '%');
-                    };
-                }
-
-                return xhr;
-            }
-        });
+            });
+        }
     };
 
     this.uploadAllFiles =  function() {
@@ -89,9 +97,11 @@ function JSUploader() {
         var row = $('<tr>');
         row.hide();
 
-        var isValidType = (file.type == 'image/png'
-            || file.type == 'image/jpeg'
-            || file.type == 'image/jpg');
+        var isValidType = (file.file.type == 'image/png'
+            || file.file.type == 'image/jpeg'
+            || file.file.type == 'image/jpg');
+
+        var isValidSize = file.file.size / 1024 / 1024 < 2;
 
         //create preview
         var preview = $('<td>');
@@ -105,7 +115,7 @@ function JSUploader() {
             reader.onload = function (e) {
                 img.attr('src', e.target.result);
             }
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(file.file);
 
             preview.append(img);
         }
@@ -115,22 +125,22 @@ function JSUploader() {
         fileInfo.width('200px');
 
         var fileName = $('<div>');
-        fileName.html(file.name);
+        fileName.html(file.file.name);
 
         var fileType = $('<div>');
-        fileType.html(file.type);
+        fileType.html(file.file.type);
 
         var fileSize = $('<div>');
-        var size = file.size;
+        var size = file.file.size;
 
-        if((file.size / 1024 / 1024) > 1.0) {
-            fileSize.html(Math.floor(file.size / 1024 / 1024) + ' MB');
+        if((file.file.size / 1024 / 1024) > 1.0) {
+            fileSize.html(Math.floor(file.file.size / 1024 / 1024) + ' MB');
         }
-        else if((file.size / 1024) > 1.0) {
-            fileSize.html(Math.floor(file.size / 1024) + ' KB');
+        else if((file.file.size / 1024) > 1.0) {
+            fileSize.html(Math.floor(file.file.size / 1024) + ' KB');
         }
         else {
-            fileSize.html(file.size + ' bytes');
+            fileSize.html(file.file.size + ' bytes');
         }
 
 
@@ -144,13 +154,16 @@ function JSUploader() {
         messageColumn.width('200px');
         if(!isValidType)
         {
-            messageColumn.html('Unsupported mimetype ' + file.type);
+            messageColumn.html('Unsupported mimetype ' + file.file.type);
+        }
+        if(!isValidSize) {
+            messageColumn.html(messageColumn.html() + 'File size is ' + Math.floor(file.file.size / 1024 / 1024) + ' MB. Limit is2 MB.');
         }
 
         //create progress
         var progressColumn = $('<td>');
         progressColumn.attr('style', 'vertical-align: middle;');
-        if(isValidType) {
+        if(file.valid) {
             var progress = $('<div>');
 
             progress.attr('class', 'progress');
@@ -174,7 +187,7 @@ function JSUploader() {
         uploadButton.click(function(){
             baseClass.uploadFile(row.index());
         });
-        if(isValidType) {
+        if(file.valid) {
             button1.append(uploadButton);
         }
 

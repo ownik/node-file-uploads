@@ -42,7 +42,7 @@ router.post('/', function(req, res, next) {
         uploadFile.path = './files/' + part.filename;
 
         if(uploadFile.size > maxSize) {
-            errors.push('File size is ' + uploadFile.size + '. Limit is' + (maxSize / 1024 / 1024) + 'MB.');
+            errors.push('File size is ' + uploadFile.size / 1024 / 1024 + '. Limit is' + (maxSize / 1024 / 1024) + 'MB.');
         }
 
         if(supportMimeTypes.indexOf(uploadFile.type) == -1) {
