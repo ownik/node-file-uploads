@@ -109,7 +109,7 @@ function JSUploader() {
         if(isValidType)
         {
             var img = $('<img>');
-            img.attr('class', 'img-responsive');
+            img.attr('class', 'img-fullsize');
 
             var reader = new FileReader();
             reader.onload = function (e) {
